@@ -145,6 +145,74 @@ API:
 
 The above code will load the `Database` and `API` sections from the `config.yml` file and inject them into the respective services.
 
+## Example: Using a Global Configuration Without a Dynamic Config Loader
+
+In this example, we demonstrate how to use `fxconfig` to load a global configuration and inject it into different parts of the application. Unlike the dynamic config loader, this approach loads the configuration statically, meaning it is loaded once at application startup and remains unchanged.
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"schneider.vip/fxconfig"
+
+	"go.uber.org/fx"
+)
+
+// Config represents the global configuration structure.
+type Config struct {
+	fx.Out
+	Database DatabaseConfig
+	API      APIConfig
+}
+
+// DatabaseConfig represents the database configuration section.
+type DatabaseConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+}
+
+// APIConfig represents the API configuration section.
+type APIConfig struct {
+	Endpoint string
+	Timeout  time.Duration
+}
+
+// NewDatabaseService is a constructor that uses the database configuration.
+func NewDatabaseService(cfg DatabaseConfig) {
+	for {
+		fmt.Println("Database Config:", cfg.Host, cfg.Port)
+		time.Sleep(1 * time.Second)
+	}
+}
+
+// NewAPIService is a constructor that uses the API configuration.
+func NewAPIService(cfg APIConfig) {
+	for {
+		fmt.Println("API Config:", cfg.Endpoint, cfg.Timeout)
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func main() {
+	fx.New(
+		fx.Provide(
+			// Provide static configuration for different sections.
+			fxconfig.New[Config](),
+		),
+		fx.Invoke(
+			// Invoke the service constructors with the loaded configurations.
+			NewDatabaseService,
+			NewAPIService,
+		),
+	).Run()
+}
+```
+
 ## API Reference
 
 ## `fxconfig.New`
